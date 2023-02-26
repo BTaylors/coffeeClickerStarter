@@ -11,12 +11,19 @@ const data = window.data;
  *   SLICE 1
  **************/
 
-function updateCoffeeView(coffeeQty) {
+function updateCoffeeView(coffeeQty) {  
+let countSpan = document.getElementById("coffee_counter");
+countSpan.innerText = coffeeQty;
   // Create a reference to the element who's ID is 'coffee_counter'
   // Set the innerText of that element to be the coffeeQty passed into this function
 }
 
-function clickCoffee(data) {
+function clickCoffee(data) {  
+  data.coffee++;
+  updateCoffeeView(data.coffee);
+  if (renderProducers) {
+    renderProducers(data);
+  }
   // Increment the data object's (passed into this function) coffee property by one
   // call the updateCoffeeView function and pass it the newly updated data.coffee property
   // call the renderProducers function and pass it the data object
@@ -26,13 +33,20 @@ function clickCoffee(data) {
  *   SLICE 2
  **************/
 
-function unlockProducers(producers, coffeeCount) {
+function unlockProducers(producers, coffeeCount) {  producers.forEach((producer) => {
+  if (coffeeCount >= producer.price / 2) {
+    producer.unlocked = true;
+  }
+});
+return producers;
   // loop through the producers array passed into the function
   // for each producer, if the coffeeCount (passed in) is greater than or equal
   // to half the producer's price, reassign the producers.unlocked property to equal true
 }
 
-function getUnlockedProducers(data) {
+function getUnlockedProducers(data) {  let producers = data.producers;
+  let filtered = producers.filter((producer) => producer.unlocked === true);
+  return filtered;
   // use the Array.prototype.filter() method
   // filter through the data.producers property, and return an array with only the producers whose
   // unlocked property is true
@@ -74,7 +88,11 @@ function deleteAllChildNodes(parent) {
   }
 }
 
-function renderProducers(data) {
+function renderProducers(data) {  
+const producerContainer = document.getElementById("producer_container");
+deleteAllChildNodes(producerContainer);
+unlockProducers(data.producers, data.coffee);
+
   // call the unlockProducers function and pass it data.producers and data.coffee
 
   // make a reference to the DOM element whose ID is producer_container
@@ -143,15 +161,30 @@ function buyButtonClick(event, data) {
 }
 
 function tick(data) {
+  data.coffee += data.totalCPS;
+  updateCoffeeView(data.coffee);
+  renderProducers(data);
+}
   // increment the data object's (passed into this function)
   // coffee property by the data.totalCPS amount
 
   // call the updateCoffeeView function and pass it the data.coffee property
 
   // call the renderProducers function and pass it the newly updated data object
-  renderProducers(data);
-}
 
+
+if (typeof process === "undefined") {
+  const data = window.data;
+  const bigCoffee = document.getElementById("big_coffee");
+  bigCoffee.addEventListener("click", () => clickCoffee(data));
+
+  const producerContainer = document.getElementById("producer_container");
+  producerContainer.addEventListener("click", (event) => {
+    const clickTarget = event.target;
+    if (clickTarget.tagName === "BUTTON") {
+      buyButtonClick(event, data);
+    }
+  });
 // Event Listeners
 
 // add a 'click' event listener to the bigCoffee element (that you referenced above)
@@ -162,3 +195,24 @@ function tick(data) {
 
 // You do not need to edit this last line. This simple runs your tick function every 1000ms, or 1s
 setInterval(() => tick(data), 1000);
+}
+
+else if (process) {
+  module.exports = {
+    updateCoffeeView,
+    clickCoffee,
+    unlockProducers,
+    getUnlockedProducers,
+    makeDisplayNameFromId,
+    makeProducerDiv,
+    deleteAllChildNodes,
+    renderProducers,
+    updateCPSView,
+    getProducerById,
+    canAffordProducer,
+    updatePrice,
+    attemptToBuyProducer,
+    buyButtonClick,
+    tick,
+  };
+}
